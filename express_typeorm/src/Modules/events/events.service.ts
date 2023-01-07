@@ -1,10 +1,12 @@
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import App from "../../app";
+import { Workshop } from './entities/workshop.entity';
 
 
 export class EventsService {
   private eventRepository: Repository<Event>;
+  private workShopRepository: Repository<Workshop>;
 
   constructor(app: App) {
     this.eventRepository = app.getDataSource().getRepository(Event);
@@ -92,7 +94,12 @@ export class EventsService {
      */
 
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+    const events = await this.eventRepository.find()
+    const workShops = await this.workShopRepository.find()
+    return events.map( event => {
+      workShops.map( workShop => workShop.eventId === event.id )
+    })
+    // throw new Error('TODO task 1');
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
@@ -162,6 +169,7 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    return (await this.workShopRepository.find()).filter( (x) => x.start > new Date().toString())
+    // throw new Error('TODO task 2');
   }
 }
