@@ -10,6 +10,7 @@ export class EventsService {
 
   constructor(app: App) {
     this.eventRepository = app.getDataSource().getRepository(Event);
+    this.workShopRepository = app.getDataSource().getRepository(Workshop);
   }
 
   async getWarmupEvents() {
@@ -96,9 +97,10 @@ export class EventsService {
   async getEventsWithWorkshops() {
     const events = await this.eventRepository.find()
     const workShops = await this.workShopRepository.find()
-    return events.map( event => {
-      workShops.map( workShop => workShop.eventId === event.id )
-    })
+    let result =  events.map(e => ({
+      ...e, workshops: workShops.filter(({ eventId }) => eventId === e.id)
+    }))
+    return result
     // throw new Error('TODO task 1');
   }
 
