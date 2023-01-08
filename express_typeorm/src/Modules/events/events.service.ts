@@ -171,7 +171,14 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    return (await this.workShopRepository.find()).filter( (x) => x.start > new Date().toString())
+    const events = await this.eventRepository.find()
+  
+    const workShops = (await this.workShopRepository.find()).filter(({start}) => start > new Date().toString())
+    
+    let result =  events.map(e => ({
+      ...e, workshops: workShops.filter(({ eventId }) => eventId === e.id)
+    }))
+    return result
     // throw new Error('TODO task 2');
   }
 }
