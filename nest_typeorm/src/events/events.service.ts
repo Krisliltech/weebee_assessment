@@ -2,12 +2,15 @@ import { Repository } from 'typeorm';
 import { Get, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
+import { Workshop } from './entities/workshop.entity';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private eventRepository: Repository<Event>,
+    @InjectRepository(Workshop)
+    private workShopRepository: Repository<Workshop>,
   ) {}
 
   getWarmupEvents() {
@@ -93,7 +96,13 @@ export class EventsService {
 
   @Get('events')
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+    const events = await this.eventRepository.find();
+    const workShops = await this.workShopRepository.find();
+   
+    return events.map(e => ({
+      ...e, workshops: workShops.filter(({ eventId }) => eventId === e.id)
+    }))
+    // throw new Error('TODO task 1');
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
@@ -164,6 +173,23 @@ export class EventsService {
      */
   @Get('futureevents')
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    const currentDate = new Date();
+
+    const workShops = await this.workShopRepository
+      .createQueryBuilder('workshops')
+      .where('workshops.start > :currentDate', { currentDate })
+      .getMany();
+    
+    const eventIds = workShops.map(x =>  x.eventId)
+    
+    const events = await this.eventRepository
+      .createQueryBuilder('events')
+      .whereInIds(eventIds)
+      .getMany();
+    
+    return events.map(e => ({
+      ...e, workshops: workShops.filter(({ eventId }) => eventId === e.id)
+    }))
+    // throw new Error('TODO task 2');
   }
 }
