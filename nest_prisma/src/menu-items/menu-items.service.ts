@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MenuItem } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -81,6 +82,30 @@ export class MenuItemsService {
     ]
   */
   async getMenuItems() {
-    throw new Error('TODO in task 3');
+    const menuItems = await this.prisma.menuItem.findMany();
+    return this.buildNestedArray(menuItems)
+    // throw new Error('TODO in task 3');
   }
+
+  private buildNestedArray(menuItems: MenuItem[], parentId: null | number = null) {
+    let nestedArray: MenuItem[] = [];
+
+    for (let element of menuItems) {
+      if (element.parentId === parentId) {
+        let menuItem = {
+          id: element.id,
+          name: element.name,
+          url: element.url,
+          parentId: element.parentId,
+          createdAt: element.createdAt,
+          children: this.buildNestedArray(menuItems, element.id)
+        };
+        
+        nestedArray.push(menuItem);
+      }
+    }
+    
+    return nestedArray;
+  }
+
 }
