@@ -171,14 +171,23 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    const events = await this.eventRepository.find()
-  
-    const workShops = (await this.workShopRepository.find()).filter(({start}) => start > new Date().toString())
+    const currentDate = new Date();
+
+    const workShops = await this.workShopRepository
+      .createQueryBuilder('workshops')
+      .where('workshops.start > :currentDate', { currentDate })
+      .getMany();
     
-    let result =  events.map(e => ({
+    const eventIds = workShops.map(x =>  x.eventId)
+    
+    const events = await this.eventRepository
+      .createQueryBuilder('events')
+      .whereInIds(eventIds)
+      .getMany();
+    
+    return events.map(e => ({
       ...e, workshops: workShops.filter(({ eventId }) => eventId === e.id)
     }))
-    return result
     // throw new Error('TODO task 2');
   }
 }
